@@ -6,6 +6,14 @@
     ╚══════════════════════════════════════════════════════════════╝
 ]]
 
+do
+    local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
+    if _G._MOD_LOADED and _G._MOD_PC == pc then return end
+    _G._MOD_LOADED = true
+    _G._MOD_PC = pc
+end
+
+
 local SCRIPT_VERSION = "5.0"
 local require = require
 local import = import
