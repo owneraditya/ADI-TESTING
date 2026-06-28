@@ -32,12 +32,13 @@ if _G.Mod_Chams_YellowEnabled == nil then _G.Mod_Chams_YellowEnabled = false end
 if _G.Mod_Chams_GreenRGB == nil then _G.Mod_Chams_GreenRGB = {R=0, G=255, B=0, A=255} end
 if _G.Mod_Chams_YellowRGB == nil then _G.Mod_Chams_YellowRGB = {R=255, G=255, B=0, A=255} end
 
--- ESPConfig for wallhack
+-- ESPConfig for wallhack (merged with Glow)
 _G.ESPConfig = _G.ESPConfig or {
     Wallhack = false,
     WallhackVisibleColor = 1,
     WallhackInvisibleColor = 2,
     WallhackBrightness = 25,
+    WallhackGlow = 3.0,          -- <--- NEW GLOW CONFIG
     ShowAI = true,
 }
 
@@ -71,33 +72,6 @@ end
 
 local ok_gd, GameplayData = pcall(require, "GameLua.GameCore.Data.GameplayData")
 if not ok_gd then GameplayData = nil end
-
--- ============================================================
--- SHOW POPUP (for bypass activation)
--- ============================================================
-local function ShowBypassPopup()
-    pcall(function()
-        local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
-        if not slua.isValid(pc) then return end
-        local hud = pc:GetHUD()
-        if slua.isValid(hud) and hud.AddDebugText then
-            hud:AddDebugText(
-                "⚡ BYPASS V2.0 ACTIVE ⚡\nAll 14 Modules Loaded\n@ADITYA_ORG",
-                pc:GetCurPawn(),
-                1.0,
-                {X=0, Y=0, Z=200},
-                {X=0, Y=0, Z=200},
-                {R=0, G=255, B=0, A=255},
-                true, false, true, nil, 2.5, true
-            )
-        end
-        -- Also show a system notice
-        local Notice = safe_require("client.slua.logic.common.logic_notice")
-        if Notice and Notice.ShowNotice then
-            Notice.ShowNotice("BYPASS V2.0 ACTIVATED - Play Safe!", 3)
-        end
-    end)
-end
 
 -- ============================================================
 -- MODULE 1: DOMAIN BLOCKER (HTTP + SOCKET + WEBVIEW)
@@ -677,13 +651,6 @@ local function InitAllBypasses()
         InitIntegrityOverrides()
         _G.Bypassed = true
         print("[BYPASS V2.0] All 14 Bypasses Activated Successfully! - @ADITYA_ORG")
-        -- Show popup after a small delay (to ensure HUD is ready)
-        local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
-        if slua.isValid(pc) and pc.AddGameTimer then
-            pc:AddGameTimer(0.5, false, ShowBypassPopup)
-        else
-            ShowBypassPopup()
-        end
     end)
 end
 
@@ -693,7 +660,24 @@ end
 InitAllBypasses()
 
 -- ============================================================
--- WALLHACK (from ESP+Multifonctionnel)
+-- WELCOME POP-UP (replaces the old bypass popup)
+-- ============================================================
+pcall(function()
+    local Msg = package.loaded["client.slua.logic.common.logic_common_msg_box"]
+    if not Msg then Msg = require("client.slua.logic.common.logic_common_msg_box") end
+    local Web = require("client.slua.logic.url.logic_webview_sdk")
+    local function onClick() if Web then Web:OpenURL("https://t.me/ADITYA_ORG") end end
+    if Msg and Msg.Show then
+        Msg.Show(4, "✦ ADITYA_ORG – ELITE ULTIMATE ✦",
+        "\n★ Developer : @ADITYA_ORG\n" ..
+        "★ Status    : UNDETECTED & OPTIMIZED\n" ..
+        "★ Bypass    : 5-Layer Deep Shield + All Visuals\n\n" ..
+        "✓ Premium Build Loaded Successfully!", onClick)
+    end
+end)
+
+-- ============================================================
+-- WALLHACK (MERGE WITH GLOW)
 -- ============================================================
 function ApplyWallhack()
     if not _G.ESPConfig.Wallhack then return end
@@ -708,6 +692,7 @@ function ApplyWallhack()
         local brightness = _G.ESPConfig.WallhackBrightness or 25
         local visibleColorIndex = _G.ESPConfig.WallhackVisibleColor or 1
         local invisibleColorIndex = _G.ESPConfig.WallhackInvisibleColor or 2
+        local glow = _G.ESPConfig.WallhackGlow or 3.0   -- <-- GLOW ADDED
         local colorMap = {
             [1] = {R=brightness, G=0, B=0, A=1},
             [2] = {R=brightness, G=brightness, B=brightness, A=1},
@@ -797,6 +782,9 @@ function ApplyWallhack()
                                             currentCached:SetVectorParameterValue("DiffuseColor", finalColor)
                                             currentCached:SetVectorParameterValue("EmissiveColor", finalColor)
                                             currentCached:SetVectorParameterValue("ParaScaleOffset", scale)
+                                            -- GLOW PARAMETERS ADDED
+                                            currentCached:SetScalarParameterValue("Glow", glow)
+                                            currentCached:SetScalarParameterValue("Emissive", glow)
                                         end)
                                         enemy._midColorSet = true
                                     end
@@ -851,7 +839,7 @@ end
 local function HPBar(pct)
     local n = math.floor((pct * 4) + 0.5)
     local s = ""
-    for i = 1, 4 do s = s .. (i <= n and "▁" or " ") end
+    for i = 1, 4 do s = s .. (i <= n and "▬" or " ") end
     return s
 end
 
@@ -993,7 +981,7 @@ local function ESPTick()
 
     if not crowded and HUD and currentPawn then
         HUD:AddDebugText(string.format("BOT : %d     PLAYER : %d", botCount, playerCount), currentPawn, 1, {X=0,Y=0,Z=155}, {X=0,Y=0,Z=155}, {R=255,G=255,B=0,A=255}, true, false, true, nil, 1.0, true)
-        HUD:AddDebugText("MOD BY @ADITYA_ORG", currentPawn, 1, {X=0,Y=0,Z=145}, {X=0,Y=0,Z=145}, {R=0,G=200,B=255,A=255}, true, false, true, nil, 1.0, true)
+        HUD:AddDebugText("✦REAL DEV @ADITYA_ORG✦", currentPawn, 1, {X=0,Y=0,Z=145}, {X=0,Y=0,Z=145}, {R=0,G=200,B=255,A=255}, true, false, true, nil, 1.0, true)
     end
 end
 
@@ -1293,7 +1281,7 @@ pcall(function()
 end)
 
 -- ============================================================
--- MENU (with Wallhack settings in English)
+-- MENU (with Wallhack + Glow settings)
 -- ============================================================
 _G.InitModMenuTab = function()
     local LocUtil = _G.LocUtil
@@ -1388,7 +1376,7 @@ _G.InitModMenuTab = function()
                 end
             },
 
-            -- Wallhack section
+            -- Wallhack section (merged with Glow)
             { UI = AliasMap.Title, Text = "--- WALLHACK ---" },
             {
                 Key = "WH_Enabled",
@@ -1436,6 +1424,21 @@ _G.InitModMenuTab = function()
                 GetFunc = function() return _G.ESPConfig.WallhackBrightness or 25 end,
                 SetFunc = function(_, value)
                     _G.ESPConfig.WallhackBrightness = value
+                    return true
+                end
+            },
+            -- NEW GLOW SLIDER
+            {
+                Key = "WH_Glow",
+                UI = AliasMap.Slider,
+                Text = "Glow Intensity",
+                Min = 0,
+                Max = 10,
+                Step = 0.5,
+                IsPercent = false,
+                GetFunc = function() return _G.ESPConfig.WallhackGlow or 3.0 end,
+                SetFunc = function(_, value)
+                    _G.ESPConfig.WallhackGlow = value
                     return true
                 end
             },
@@ -1499,5 +1502,5 @@ end
 _G.InitModMenuTab()
 
 -- ============================================================
--- END OF SCRIPT
+-- END OF SCRIPT (REMOVED DUPLICATE STANDALONE MODULE)
 -- ============================================================
